@@ -1,2 +1,10 @@
+blinker
+click
+colorama
 Flask
+itsdangerous
+Jinja2
+MarkupSafe
 pyodbc
+python-dotenv
+Werkzeug
