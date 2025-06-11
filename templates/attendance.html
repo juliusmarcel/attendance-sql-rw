@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      /* Notification Styles */
+      @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+      }
+      
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Notification Container -->
+    <div class="notification-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="notification {{ category }}">
+              {% if category == 'success' %}
+                <i class="fas fa-check-circle"></i>
+              {% elif category == 'error' %}
+                <i class="fas fa-exclamation-circle"></i>
+              {% else %}
+                <i class="fas fa-info-circle"></i>
+              {% endif %}
+              <span>{{ message }}</span>
+              <button class="close-btn" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <div class="logout-container">
+      <form action="/logout" method="GET">
+        <button type="submit" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </form>
+    </div>
+    <div class="container">
+      <h2>Welcome, {{ nama }} (Shift: {{ shift }})</h2>
+      <form method="POST" action="/checkin">
+        <input type="hidden" name="nip" value="{{ nip }}" />
+        <button type="submit">Check In</button>
+      </form>
+      <form method="POST" action="/checkout">
+        <input type="hidden" name="nip" value="{{ nip }}" />
+        <button type="submit">Check Out</button>
+      </form>
+
+      <h3>Recent Attendance History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Check In</th>
+            <th>Check Out</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in history %}
+          <tr>
+            <td>{{ record.CheckInTime }}</td>
+            <td>{{ record.CheckOutTime }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      // Auto-remove notifications after 3 seconds
+      document.addEventListener('DOMContentLoaded', function() {
+        const notifications = document.querySelectorAll('.notification');
+        notifications.forEach(notification => {
+          setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.5s forwards';
+            setTimeout(() => notification.remove(), 500);
+          }, 3000);
+        });
+        
+        // Close button functionality
+        document.querySelectorAll('.close-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            this.parentElement.style.animation = 'fadeOut 0.5s forwards';
+            setTimeout(() => this.parentElement.remove(), 500);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

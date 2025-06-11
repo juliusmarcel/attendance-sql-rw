@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Attendance Home</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script>
+      // Function to show alert message
+      function showAlert(message, type) {
+          const alertDiv = document.createElement('div');
+          alertDiv.className = `alert ${type}`;
+          alertDiv.textContent = message;
+          document.body.prepend(alertDiv);
+          setTimeout(() => alertDiv.remove(), 3000);
+      }
+
+      // Check if there's a flash message from the server
+      window.onload = function() {
+          {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                  {% for category, message in messages %}
+                      showAlert("{{ message }}", "{{ category }}");
+                  {% endfor %}
+              {% endif %}
+          {% endwith %}
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Attendance System</h1>
+      <form method="POST">
+        <input
+          type="text"
+          name="nip"
+          placeholder="Enter NIP or 'admin'"
+          required
+        />
+        <button type="submit">Enter</button>
+      </form>
+    </div>
+  </body>
+</html>

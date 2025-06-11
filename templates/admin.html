@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script>
+      // Function to show alert message
+      function showAlert(message, type) {
+          const alertDiv = document.createElement('div');
+          alertDiv.className = `alert ${type}`;
+          alertDiv.textContent = message;
+          document.body.prepend(alertDiv);
+          setTimeout(() => alertDiv.remove(), 3000);
+      }
+
+      // Check if there's a flash message from the server
+      window.onload = function() {
+          {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                  {% for category, message in messages %}
+                      showAlert("{{ message }}", "{{ category }}");
+                  {% endfor %}
+              {% endif %}
+          {% endwith %}
+      };
+    </script>
+  </head>
+  <body>
+    <div class="logout-container">
+      <form action="/logout" method="GET">
+        <button type="submit" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </form>
+    </div>
+
+    <div class="container">
+      <h1>Admin Panel</h1>
+
+      <h2>Employee List</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>NIP</th>
+            <th>Name</th>
+            <th>Shift</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for employee in employees %}
+          <tr>
+            <td>{{ employee.NIP }}</td>
+            <td>{{ employee.Nama }}</td>
+            <td>{{ employee.Shift }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+        <h2>Add New Employee</h2>
+        <form method="POST" action="/add_employee" onsubmit="return validateNIP()">
+            <input type="text" name="nip" placeholder="NIP (12 digits)" required 
+                   pattern="\d{12}" title="NIP must be exactly 12 digits">
+            <input type="text" name="nama" placeholder="Name" required>
+            <select name="shift" required>
+                <option value="">Select Shift</option>
+                <option value="Pagi">Pagi</option>
+                <option value="Siang">Siang</option>
+                <option value="Malam">Malam</option>
+            </select>
+            <button type="submit">Add</button>
+        </form>
+
+      <h2>Attendance Log</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>NIP</th>
+            <th>Name</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td>{{ log.NIP }}</td>
+            <td>{{ log.Name }}</td>
+            <td>{{ log.CheckInTime }}</td>
+            <td>{{ log.CheckOutTime }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <script>
+                function validateNIP() {
+            const nipInput = document.querySelector('input[name="nip"]');
+            if (nipInput.value.length !== 12 || !/^\d+$/.test(nipInput.value)) {
+                showAlert("NIP must be exactly 12 digits", "error");
+                return false;
+            }
+            return true;
+        }
+    </script>
+    </script>
+  </body>
+</html>
