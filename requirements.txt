@@ -8,3 +8,5 @@ MarkupSafe
 pyodbc
 python-dotenv
 Werkzeug
+pymysql
+gunicorn

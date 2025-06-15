@@ -1,52 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Admin Dashboard</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    />
-    <script>
-      // Function to show alert message
-      function showAlert(message, type) {
-          const alertDiv = document.createElement('div');
-          alertDiv.className = `alert ${type}`;
-          alertDiv.textContent = message;
-          document.body.prepend(alertDiv);
-          setTimeout(() => alertDiv.remove(), 3000);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-      // Check if there's a flash message from the server
-      window.onload = function() {
-          {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                  {% for category, message in messages %}
-                      showAlert("{{ message }}", "{{ category }}");
-                  {% endfor %}
-              {% endif %}
-          {% endwith %}
-      };
-    </script>
-  </head>
-  <body>
-    <div class="logout-container">
-      <form action="/logout" method="GET">
-        <button type="submit" class="logout-btn">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-      </form>
+</head>
+<body>
+  <div class="logout-container">
+    <form action="/logout" method="GET">
+      <button type="submit" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </form>
+  </div>
+
+  <div class="container">
+    <h1>Admin Panel</h1>
+
+    <!-- Tab Buttons -->
+    <div>
+      <button class="tab-button active" onclick="showTab('employeeTab')">Employee List</button>
+      <button class="tab-button" onclick="showTab('logTab')">Attendance Log</button>
     </div>
 
-    <div class="container">
-      <h1>Admin Panel</h1>
+    <!-- Employee List Tab -->
+    <div id="employeeTab" class="tab-content active">
+      <h2>Add New Employee</h2>
+      <form method="POST" action="/add_employee" onsubmit="return validateNIP()">
+        <input type="text" name="nip" placeholder="NIP (12 digits)" required pattern="\d{12}" title="NIP must be exactly 12 digits">
+        <input type="text" name="nama" placeholder="Name" required>
+        <select name="shift" required>
+          <option value="">Select Shift</option>
+          <option value="Pagi">Pagi</option>
+          <option value="Siang">Siang</option>
+          <option value="Malam">Malam</option>
+        </select>
+        <button type="submit">Add</button>
+      </form>
 
       <h2>Employee List</h2>
-      <table>
+      <input type="text" id="employeeSearch" class="search-input" placeholder="Search by NIP or Name...">
+
+      <table id="employeeTable">
         <thead>
           <tr>
             <th>NIP</th>
@@ -64,23 +61,15 @@
           {% endfor %}
         </tbody>
       </table>
+      <div class="pagination" id="employeePagination"></div>
+    </div>
 
-        <h2>Add New Employee</h2>
-        <form method="POST" action="/add_employee" onsubmit="return validateNIP()">
-            <input type="text" name="nip" placeholder="NIP (12 digits)" required 
-                   pattern="\d{12}" title="NIP must be exactly 12 digits">
-            <input type="text" name="nama" placeholder="Name" required>
-            <select name="shift" required>
-                <option value="">Select Shift</option>
-                <option value="Pagi">Pagi</option>
-                <option value="Siang">Siang</option>
-                <option value="Malam">Malam</option>
-            </select>
-            <button type="submit">Add</button>
-        </form>
-
+    <!-- Attendance Log Tab -->
+    <div id="logTab" class="tab-content">
       <h2>Attendance Log</h2>
-      <table>
+      <input type="text" id="logSearch" class="search-input" placeholder="Search by NIP or Name...">
+
+      <table id="logTable">
         <thead>
           <tr>
             <th>NIP</th>
@@ -100,17 +89,91 @@
           {% endfor %}
         </tbody>
       </table>
+      <div class="pagination" id="logPagination"></div>
     </div>
-    <script>
-                function validateNIP() {
-            const nipInput = document.querySelector('input[name="nip"]');
-            if (nipInput.value.length !== 12 || !/^\d+$/.test(nipInput.value)) {
-                showAlert("NIP must be exactly 12 digits", "error");
-                return false;
-            }
-            return true;
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".tab-button").forEach(el => el.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      event.target.classList.add("active");
+    }
+
+    function showAlert(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert ${type}`;
+      alertDiv.textContent = message;
+      document.body.prepend(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    function validateNIP() {
+      const nipInput = document.querySelector('input[name="nip"]');
+      if (nipInput.value.length !== 12 || !/^\d+$/.test(nipInput.value)) {
+        showAlert("NIP must be exactly 12 digits", "error");
+        return false;
+      }
+      return true;
+    }
+
+    function setupTablePagination(tableId, paginationId, rowsPerPage, searchInputId) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector("tbody");
+      const searchInput = document.getElementById(searchInputId);
+      let rows = Array.from(tbody.querySelectorAll("tr"));
+
+      function filterRows() {
+        const keyword = searchInput.value.toLowerCase();
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(keyword) ? "" : "none";
+        });
+        paginate();
+      }
+
+      function paginate() {
+        const visibleRows = rows.filter(row => row.style.display !== "none");
+        const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+        const pagination = document.getElementById(paginationId);
+
+        function showPage(page) {
+          visibleRows.forEach((row, i) => {
+            row.style.display = (i >= (page - 1) * rowsPerPage && i < page * rowsPerPage) ? "" : "none";
+          });
+
+          pagination.innerHTML = "";
+          for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement("button");
+            btn.textContent = i;
+            if (i === page) btn.classList.add("active");
+            btn.addEventListener("click", () => showPage(i));
+            pagination.appendChild(btn);
+          }
         }
-    </script>
-    </script>
-  </body>
+
+        if (visibleRows.length > 0) showPage(1);
+        else pagination.innerHTML = "";
+      }
+
+      searchInput.addEventListener("input", filterRows);
+      paginate();
+    }
+
+    window.onload = function () {
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          const messages = {{ messages|tojson }};
+          messages.forEach(([category, message]) => {
+            showAlert(message, category);
+          });
+        {% endif %}
+      {% endwith %}
+
+      setupTablePagination("logTable", "logPagination", 5, "logSearch");
+      setupTablePagination("employeeTable", "employeePagination", 5, "employeeSearch");
+    };
+  </script>
+</body>
 </html>

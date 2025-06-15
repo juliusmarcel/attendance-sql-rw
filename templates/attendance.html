@@ -66,24 +66,25 @@
         <button type="submit">Check Out</button>
       </form>
 
-      <h3>Recent Attendance History</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Check In</th>
-            <th>Check Out</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for record in history %}
-          <tr>
-            <td>{{ record.CheckInTime }}</td>
-            <td>{{ record.CheckOutTime }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+<h3>Recent Attendance History</h3>
+<table id="historyTable">
+  <thead>
+    <tr>
+      <th>Check In</th>
+      <th>Check Out</th>
+    </tr>
+  </thead>
+  <tbody id="historyBody">
+    {% for record in history %}
+    <tr>
+      <td>{{ record.CheckInTime }}</td>
+      <td>{{ record.CheckOutTime }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="pagination" id="paginationHistory"></div>
+
 
     <script>
       // Auto-remove notifications after 3 seconds
@@ -104,6 +105,38 @@
           });
         });
       });
+
+      function setupHistoryPagination(rowsPerPage = 5) {
+  const table = document.getElementById("historyTable");
+  const tbody = table.querySelector("tbody");
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  const pagination = document.getElementById("paginationHistory");
+
+  function showPage(page) {
+    rows.forEach((row, i) => {
+      row.style.display = (i >= (page - 1) * rowsPerPage && i < page * rowsPerPage) ? "" : "none";
+    });
+
+    pagination.innerHTML = "";
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      if (i === page) btn.classList.add("active");
+      btn.addEventListener("click", () => showPage(i));
+      pagination.appendChild(btn);
+    }
+  }
+
+  if (rows.length > 0) showPage(1);
+}
+
+// Panggil setelah DOM siap
+document.addEventListener('DOMContentLoaded', function() {
+  // ... existing notification logic ...
+  setupHistoryPagination();
+});
+
     </script>
   </body>
 </html>

@@ -1,34 +1,29 @@
 FROM python:3.10-slim
 
-# Install ODBC dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+# 1. Install ODBC dependencies (optimized layers)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     unixodbc \
     unixodbc-dev \
-    libpq-dev \
-    apt-transport-https \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl -fsSL https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Microsoft ODBC Driver for SQL Server
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
-    apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql17
-
-# Set working directory
+# 2. Set up app directory
 WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# 3. Copy app files (done separately for better caching)
 COPY . .
 
-# Install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# 4. Configure runtime
+ENV FLASK_APP=app.py
+EXPOSE 8000
 
-# Expose port
-EXPOSE 5000
-
-# Run app
-CMD ["python", "app.py"]
+# 5. Use Gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
